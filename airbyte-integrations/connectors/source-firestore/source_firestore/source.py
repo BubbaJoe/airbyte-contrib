@@ -44,7 +44,7 @@ class Helpers(object):
 # Basic full refresh stream
 class FirestoreStream(HttpStream, ABC):
     _cursor_value: Optional[datetime]
-    cursor_field: Union[str, List[str]] = "updatedAt"
+    cursor_field: Union[str, List[str]] = []
     @property
     def cursor_key(self):
         if isinstance(self.cursor_field, list):

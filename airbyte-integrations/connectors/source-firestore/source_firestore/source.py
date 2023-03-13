@@ -131,12 +131,14 @@ class FirestoreStream(HttpStream, ABC):
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
         data = response.json()
         results = []
+        print("GG", data)
         for entry in data:
             if "document" in entry:
                 result = {
                     "name": entry["document"]["name"],
                 }
-                for key, value in entry["document"]["fields"]:
+                print("GG", entry["document"]["fields"])
+                for key, value in dict(entry["document"]["fields"]):
                     result[key] = resolve_value(value)
         
                 if self.cursor_key:

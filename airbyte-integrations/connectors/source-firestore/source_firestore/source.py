@@ -162,9 +162,9 @@ class FirestoreStream(HttpStream, ABC):
 
 def resolve_value(v: Mapping[str, Any]) -> Mapping[str, Any]:
     if "arrayValue" in v:
-        return [resolve_value(x) for x in v["arrayValue"]["values"]]
+        return [resolve_value(x) for x in v["arrayValue"].get("values", [])]
     if "mapValue" in v:
-        return {k: resolve_value(v) for k, v in v["mapValue"]["fields"].items()}
+        return {k: resolve_value(v) for k, v in v["mapValue"].get("fields", {}).items()}
     if "integerValue" in v:
         return int(v["integerValue"])
     if "doubleValue" in v:

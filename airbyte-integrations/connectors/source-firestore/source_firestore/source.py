@@ -45,6 +45,7 @@ class Helpers(object):
 class FirestoreStream(HttpStream, ABC):
     _cursor_value: Optional[datetime]
     cursor_field: Union[str, List[str]] = []
+    fields: List[str] = []
     @property
     def cursor_key(self):
         if isinstance(self.cursor_field, list):
@@ -140,6 +141,9 @@ class FirestoreStream(HttpStream, ABC):
                 print("GG", entry["document"]["fields"])
                 for key, value in dict(entry["document"]["fields"]).items():
                     result[key] = resolve_value(value)
+                    objectProp = get_json_schema_type(result[key])
+                    self.fields.append((key, objectProp,))
+
 
                 results.append(result)
         return iter(results)
@@ -154,13 +158,15 @@ class FirestoreStream(HttpStream, ABC):
                 "name": { "type": "string" },
             },
         }
+        for (field_key, field_type_def) in self.fields:
+            result["properties"][field_key] = field_type_def
         if self.cursor_key:
             result["properties"][self.cursor_key] = { "type": ["null", "string"] }
 
         return result
 
 
-def resolve_value(v: Mapping[str, Any]) -> Mapping[str, Any]:
+def resolve_value(v: Mapping[str, Any]) -> Any:
     if "arrayValue" in v:
         return [resolve_value(x) for x in v["arrayValue"].get("values", [])]
     if "mapValue" in v:

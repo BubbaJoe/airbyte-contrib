@@ -148,7 +148,7 @@ class FirestoreStream(HttpStream, ABC):
         result = {
             "type": "object",
             "$schema": "http://json-schema.org/draft-07/schema#",
-            "additionalProperties": True,
+            "additionalProperties": False,
             "required": ["name"],
             "properties": {
                 "name": { "type": "string" },
@@ -178,6 +178,22 @@ def resolve_value(v: Mapping[str, Any]) -> Mapping[str, Any]:
     if "nullValue" in v:
         return None
     return v
+
+def get_json_schema_type(value: Any) -> Mapping[str, Any]:
+    if isinstance(value, str):
+        return { "type": "string" }
+    if isinstance(value, int):
+        return { "type": "integer" }
+    if isinstance(value, float):
+        return { "type": "number" }
+    if isinstance(value, bool):
+        return { "type": "boolean" }
+    if isinstance(value, list):
+        if len(value) == 0:
+            return { "type": "array", "items": { "type": "null" } }
+        return { "type": "array", "items": get_json_schema_type(value[0]) }
+    if isinstance(value, dict):
+        return { "type": "object", "properties": { k: get_json_schema_type(v) for k, v in value.items() } }
 
 class IncrementalFirestoreStream(FirestoreStream, IncrementalMixin):
     start_date: Optional[datetime]

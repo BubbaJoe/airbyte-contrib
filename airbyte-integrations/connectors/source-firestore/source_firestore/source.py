@@ -140,10 +140,7 @@ class FirestoreStream(HttpStream, ABC):
                 print("GG", entry["document"]["fields"])
                 for key, value in dict(entry["document"]["fields"]).items():
                     result[key] = resolve_value(value)
-        
-                if self.cursor_key:
-                    result[self.cursor_key] = entry["document"]["fields"][self.cursor_key]["timestampValue"]
-
+                
                 results.append(result)
         return iter(results)
 

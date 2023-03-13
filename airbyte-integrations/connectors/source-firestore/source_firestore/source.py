@@ -99,7 +99,7 @@ class FirestoreStream(HttpStream, ABC):
         stream_slice: Mapping[str, Any] = None,
         next_page_token: Mapping[str, Any] = None,
     ) -> Optional[Mapping]:
-        timestamp_state: Optional[datetime] = stream_state.get(self.cursor_key)
+        timestamp_state: Optional[datetime] = stream_state.get(self.cursor_key) if self.cursor_key else None
         timestamp_value = Helpers.parse_date(timestamp_state).isoformat() if timestamp_state else None
 
         self.logger.info(f"Requesting body JSON with cursor {self.cursor_key} value {next_page_token}")
@@ -140,7 +140,7 @@ class FirestoreStream(HttpStream, ABC):
                 print("GG", entry["document"]["fields"])
                 for key, value in dict(entry["document"]["fields"]).items():
                     result[key] = resolve_value(value)
-                
+
                 results.append(result)
         return iter(results)
 
@@ -213,8 +213,9 @@ class IncrementalFirestoreStream(FirestoreStream, IncrementalMixin):
             sync_mode=sync_mode, cursor_field=cursor_field, stream_slice=stream_slice, stream_state=stream_state
         ):
             yield record
-            record_date = Helpers.parse_date(record[self.cursor_key]) if self.cursor_key else None
-            self._cursor_value = max(record_date, self._cursor_value) if self._cursor_value else record_date
+            if self.cursor_key:
+                record_date = Helpers.parse_date(record[self.cursor_key]) if self.cursor_key else None
+                self._cursor_value = max(record_date, self._cursor_value) if self._cursor_value else record_date
 
 class Collection(IncrementalFirestoreStream):
     project_id: str

@@ -6,7 +6,8 @@
 from setuptools import find_packages, setup
 
 MAIN_REQUIREMENTS = [
-    "airbyte-cdk~=0.1.56",
+    "airbyte-cdk",
+    "google-cloud-firestore",
     "google-auth",
 ]
 
@@ -15,10 +16,9 @@ TEST_REQUIREMENTS = [
     "pytest-mock~=3.6.1",
     "source-acceptance-test",
 ]
-
 setup(
     name="source_firestore",
-    description="Source implementation for Firestore.",
+    description="Source implementation for Google Firestore.",
     author="Airbyte",
     author_email="contact@airbyte.io",
     packages=find_packages(),

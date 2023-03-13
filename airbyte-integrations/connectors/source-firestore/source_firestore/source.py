@@ -104,7 +104,7 @@ class FirestoreStream(HttpStream, ABC):
 
         self.logger.info(f"Requesting body JSON with cursor {self.cursor_key} value {next_page_token}")
 
-        return {
+        body = {
             "structuredQuery": {
                 "from": [{"collectionId": self.collection_name, "allDescendants": True}],
                 "where": {
@@ -117,10 +117,16 @@ class FirestoreStream(HttpStream, ABC):
                     }
                 } if timestamp_value else None,
                 "limit": self.page_size,
-                "orderBy": [{"field": {"fieldPath": self.cursor_key}, "direction": "ASCENDING"}] if self.cursor_key else None,
+                "orderBy": [{"field": {"fieldPath": self.cursor_key}, "direction": "ASCENDING"}],
                 "startAt": {"values": [next_page_token], "before": False} if next_page_token else None,
             }
         }
+
+        if self.cursor_key is None or timestamp_value is None:
+            del body["structuredQuery"]["where"]
+            del body["structuredQuery"]["orderBy"]
+
+        return body
 
     def parse_response(self, response: requests.Response, **kwargs) -> Iterable[Mapping]:
         data = response.json()
@@ -129,8 +135,10 @@ class FirestoreStream(HttpStream, ABC):
             if "document" in entry:
                 result = {
                     "name": entry["document"]["name"],
-                    "json_data": entry["document"]["fields"],
                 }
+                for key, value in entry["document"]["fields"]:
+                    result[key] = resolve_value(value)
+        
                 if self.cursor_key:
                     result[self.cursor_key] = entry["document"]["fields"][self.cursor_key]["timestampValue"]
 
@@ -145,7 +153,6 @@ class FirestoreStream(HttpStream, ABC):
             "required": ["name"],
             "properties": {
                 "name": { "type": "string" },
-                "json_data": { "type": "object" },
             },
         }
         if self.cursor_key:
@@ -153,6 +160,25 @@ class FirestoreStream(HttpStream, ABC):
 
         return result
 
+
+def resolve_value(v: Mapping[str, Any]) -> Mapping[str, Any]:
+    if "arrayValue" in v:
+        return [resolve_value(x) for x in v["arrayValue"]["values"]]
+    if "mapValue" in v:
+        return {k: resolve_value(v) for k, v in v["mapValue"]["fields"].items()}
+    if "integerValue" in v:
+        return int(v["integerValue"])
+    if "doubleValue" in v:
+        return float(v["doubleValue"])
+    if "booleanValue" in v:
+        return bool(v["booleanValue"])
+    if "timestampValue" in v:
+        return Helpers.parse_date(v["timestampValue"])
+    if "stringValue" in v:
+        return v["stringValue"]
+    if "nullValue" in v:
+        return None
+    return v
 
 class IncrementalFirestoreStream(FirestoreStream, IncrementalMixin):
     start_date: Optional[datetime]
@@ -211,7 +237,7 @@ class Collection(IncrementalFirestoreStream):
 class SourceFirestore(AbstractSource):
     def get_auth(self, config: Mapping[str, Any]) -> TokenAuthenticator:
         scopes = ['https://www.googleapis.com/auth/datastore']
-        credentials = service_account.Credentials.from_service_account_info(json.loads(config["google_application_credentials"]), scopes=scopes)        
+        credentials = service_account.Credentials.from_service_account_info(json.loads(config["credentials_json"]), scopes=scopes)        
         credentials.refresh(google.auth.transport.requests.Request())
         return TokenAuthenticator(token=credentials.token)
 

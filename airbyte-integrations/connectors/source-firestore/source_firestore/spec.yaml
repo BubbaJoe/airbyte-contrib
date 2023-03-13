@@ -5,13 +5,13 @@ connectionSpecification:
   type: object
   required:
     - project_id
-    - google_application_credentials
+    - credentials_json
   properties:
     project_id:
       title: Project ID
       type: string
       description: Firebase project id
-    google_application_credentials:
+    credentials_json:
       title: Service Account Key JSON
       type: string
       description: JSON cert credentials in JSON format

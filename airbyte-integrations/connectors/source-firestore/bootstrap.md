@@ -10,4 +10,4 @@ In order to support incremental streams, this connector requires a cursor field 
 
 This connector uses Google Identity OAuth 2.0 tokens to authenticate with the REST API, as per the [documentation recommendation](https://firebase.google.com/docs/firestore/use-rest-api#authentication_and_authorization).
 
-Tokens are retrieved by the connector using the python `google.oauth2` library from a service account json key (property: `google_application_credentials`)
+Tokens are retrieved by the connector using the python `google.oauth2` library from a service account json key (property: `credentials_json`)

@@ -110,7 +110,7 @@ class FirestoreStream(HttpStream, ABC):
                 "from": [{"collectionId": self.collection_name, "allDescendants": True}],
                 "where": {
                     "fieldFilter": {
-                        "field": {"fieldPath": self.cursor_key },
+                        "field": { "fieldPath": self.cursor_key },
                         "op": "GREATER_THAN",
                         "value": {
                             "timestampValue": timestamp_value,
@@ -144,7 +144,6 @@ class FirestoreStream(HttpStream, ABC):
                     objectProp = get_json_schema_type(result[key])
                     self.fields.append((key, objectProp,))
 
-
                 results.append(result)
         return iter(results)
 
@@ -157,8 +156,15 @@ class FirestoreStream(HttpStream, ABC):
             "properties": {
                 "name": { "type": "string" },
             },
+            "patternProperties": {
+                "^.*$": {
+                    "type":["number","integer","string","boolean","object","array", "null"]
+                }
+            },
+            "additionalProperties": False,
         }
         for (field_key, field_type_def) in self.fields:
+            print("SCHEMA PROP", field_key, field_type_def)
             result["properties"][field_key] = field_type_def
         if self.cursor_key:
             result["properties"][self.cursor_key] = { "type": ["null", "string"] }

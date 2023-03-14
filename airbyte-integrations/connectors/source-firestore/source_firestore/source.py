@@ -151,7 +151,6 @@ class FirestoreStream(HttpStream, ABC):
         result = {
             "type": "object",
             "$schema": "http://json-schema.org/draft-07/schema#",
-            "additionalProperties": False,
             "required": ["name"],
             "properties": {
                 "name": { "type": "string" },
@@ -164,7 +163,7 @@ class FirestoreStream(HttpStream, ABC):
             "additionalProperties": False,
         }
         for (field_key, field_type_def) in self.fields:
-            print("SCHEMA PROP", field_key, field_type_def)
+            # print("SCHEMA PROP", field_key, field_type_def)
             result["properties"][field_key] = field_type_def
         if self.cursor_key:
             result["properties"][self.cursor_key] = { "type": ["null", "string"] }

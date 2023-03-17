@@ -117,7 +117,6 @@ class FirestoreStream(HttpStream, ABC):
                         },
                     }
                 } if timestamp_value else None,
-                "limit": self.page_size,
                 "orderBy": [{"field": {"fieldPath": self.cursor_key}, "direction": "ASCENDING"}],
                 "startAt": {"values": [next_page_token], "before": False} if next_page_token else None,
             }
@@ -157,7 +156,16 @@ class FirestoreStream(HttpStream, ABC):
             },
             "patternProperties": {
                 "^.*$": {
-                    "type":["number","integer","string","boolean","object","array", "null"]
+                    "anyOf": [
+                        {"type": "string"},
+                        {"type": "number"},
+                        {"type": "boolean"},
+                        {"type": "integer"},
+                        {"type": "array", "items": {"type": "string"}},
+                        {"type": "array", "items": {"type": "number"}},
+                        {"type": "array", "items": {"type": "boolean"}},
+                        {"type": "object", "properties": {}}
+                    ]
                 }
             },
             "additionalProperties": False,
